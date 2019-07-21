@@ -9,3 +9,7 @@
 /GrabbableSpeechUnity/Temp
 /GrabbableSpeechUnity/Assets/SpeechSubscriptionKey.cs.meta
 /GrabbableSpeechUnity/Assets/SpeechSubscriptionKey.cs
+/GrabbableSpeechUnity/.vs/
+/GrabbableSpeechUnity/obj/
+*.sln
+*.csproj
