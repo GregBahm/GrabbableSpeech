@@ -3,3 +3,9 @@
 ################################################################################
 
 /.vs
+/GrabbableSpeechUnity/Library
+/GrabbableSpeechUnity/Logs
+/GrabbableSpeechUnity/Packages
+/GrabbableSpeechUnity/Temp
+/GrabbableSpeechUnity/Assets/SpeechSubscriptionKey.cs.meta
+/GrabbableSpeechUnity/Assets/SpeechSubscriptionKey.cs
