@@ -8,6 +8,8 @@ using UnityEngine;
 
 public class TextSelection : MonoBehaviour
 {
+    public static TextSelection Instance;
+
     public Transform SelectionStart;
     public Transform SelectionEnd;
 
@@ -17,19 +19,20 @@ public class TextSelection : MonoBehaviour
     private StringBuilder testTextBuilder = new StringBuilder();
     private RectTransform canvasRect;
 
-    private ISpeechSource speechSource;
+    private void Awake()
+    {
+        Instance = this;
+    }
 
     private void Start()
     {
         canvasRect = MainScript.Instance.Canvas.GetComponent<RectTransform>();
-        speechSource = new FakeSpeechGenerator(); // Replace with SpeechRecognitionManager later
     }
 
-    private void Update()
+    public string GetLogText()
     {
-        Vector2 visibleCharactersCount = MainScript.Instance.VisibleCharactersCount;
-        UpdateSelection(visibleCharactersCount);
-        MainScript.Instance.OutputTextObj.text = GetLogText(speechSource.Blocks, visibleCharactersCount);
+        UpdateSelection(MainScript.Instance.VisibleCharactersCount);
+        return GetLogText(MainScript.Instance.SpeechSource.Blocks, MainScript.Instance.VisibleCharactersCount);
     }
 
     private void UpdateSelection(Vector2 visibleCharactersCount)

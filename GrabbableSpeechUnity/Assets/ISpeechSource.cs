@@ -3,4 +3,5 @@
 public interface ISpeechSource
 {
     IEnumerable<SpeechBlock> Blocks { get; }
+    string SpeechInProgress { get; }
 }

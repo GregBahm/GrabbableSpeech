@@ -6,6 +6,7 @@ public class FakeSpeechGenerator : ISpeechSource
 {
     private readonly List<SpeechBlock> blocks;
     public IEnumerable<SpeechBlock> Blocks { get { return blocks; } }
+    public string SpeechInProgress { get { return "in progress speech"; } }
 
     public FakeSpeechGenerator()
     {
