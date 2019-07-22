@@ -8,6 +8,7 @@ using System;
 
 public class MainScript : MonoBehaviour
 {
+    public Canvas Canvas;
     public Color InProgressTextColor;
     public TextMeshProUGUI OutputTextObj;
 
@@ -20,7 +21,7 @@ public class MainScript : MonoBehaviour
 
     void Update()
     {
-        OutputTextObj.text = GetFormattedLogText();
+        //OutputTextObj.text = GetFormattedLogText();
     }
 
     private string GetFormattedLogText()

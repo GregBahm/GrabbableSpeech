@@ -31,8 +31,14 @@ public class SpeechRecognitionManager : MonoBehaviour
         SpeechConfig config = SpeechConfig.FromSubscription(SpeechSubscriptionKey.Key, "westus");
         recognizer = new SpeechRecognizer(config);
         recognizer.Recognizing += Recognizer_Recognizing;
-        //recognizer.Recognized += Recognizer_Recognized;
+        recognizer.Recognized += Recognizer_Recognized;
+        recognizer.Canceled += Recognizer_Canceled;
         recognizer.StartContinuousRecognitionAsync();
+    }
+
+    private void Recognizer_Canceled(object sender, SpeechRecognitionCanceledEventArgs e)
+    {
+        SpeechInProgress = e.ErrorDetails;
     }
 
     private void Recognizer_Recognized(object sender, SpeechRecognitionEventArgs e)
@@ -61,15 +67,15 @@ public class SpeechRecognitionManager : MonoBehaviour
     {
         lock (threadLocker)
         {
-            Debug.Log(e);
-            //SpeechInProgress = e.Result.Text;
+            SpeechInProgress = e.Result.Text;
         }
     }
 
-    private void OnDestroy()
+    private async void OnDestroy()
     {
         if(recognizer != null)
         {
+            await recognizer.StopContinuousRecognitionAsync();
             recognizer.Dispose();
         }
     }
@@ -77,6 +83,8 @@ public class SpeechRecognitionManager : MonoBehaviour
 
 public class SpeechBlock
 {
+
+
     public DateTime TimeStamp { get; }
     public string Text { get; }
 
