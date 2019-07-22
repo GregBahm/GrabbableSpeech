@@ -1,15 +1,15 @@
 ﻿using UnityEngine;
 using Microsoft.CognitiveServices.Speech;
-using TMPro;
 using System.Text;
-using System.Collections.Generic;
 using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 
-public class SpeechRecognitionManager : MonoBehaviour
+public class SpeechRecognitionManager : MonoBehaviour, ISpeechSource
 {
-    private readonly List<SpeechBlock> speechBlocks = new List<SpeechBlock>();
+    private readonly ConcurrentQueue<SpeechBlock> blocks = new ConcurrentQueue<SpeechBlock>();
+    public IEnumerable<SpeechBlock> Blocks { get { return blocks; } }
     public string SpeechInProgress { get; private set; }
-    public string Log { get; private set; }
 
     private SpeechRecognizer recognizer;
     private readonly object threadLocker = new object();
@@ -43,22 +43,21 @@ public class SpeechRecognitionManager : MonoBehaviour
 
     private void Recognizer_Recognized(object sender, SpeechRecognitionEventArgs e)
     {
-        Debug.Log(e);
-        SpeechBlock newBlock = new SpeechBlock(e.Result.Text, DateTime.Now);
+        int charactersPerLine = Mathf.FloorToInt(MainScript.Instance.VisibleCharactersCount.x);
+        SpeechBlock newBlock = new SpeechBlock(e.Result.Text, DateTime.Now, charactersPerLine);
+        blocks.Enqueue(newBlock);
         lock (threadLocker)
         {
             SpeechInProgress = "";
-            speechBlocks.Add(newBlock);
-            Log = UpdateLog();
         }
     }
 
     private string UpdateLog()
     {
         StringBuilder logBuilder = new StringBuilder();
-        foreach (SpeechBlock item in speechBlocks)
+        foreach (SpeechBlock item in blocks)
         {
-            logBuilder.AppendLine(item.Text);
+            logBuilder.AppendLine(item.BaseText);
         }
         return logBuilder.ToString();
     }
@@ -78,19 +77,5 @@ public class SpeechRecognitionManager : MonoBehaviour
             await recognizer.StopContinuousRecognitionAsync();
             recognizer.Dispose();
         }
-    }
-}
-
-public class SpeechBlock
-{
-
-
-    public DateTime TimeStamp { get; }
-    public string Text { get; }
-
-    public SpeechBlock(string text, DateTime timeStamp)
-    {
-        Text = text;
-        TimeStamp = timeStamp;
     }
 }

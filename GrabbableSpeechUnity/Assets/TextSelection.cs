@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using TMPro;
 using UnityEngine;
@@ -10,81 +11,96 @@ public class TextSelection : MonoBehaviour
     public Transform SelectionStart;
     public Transform SelectionEnd;
 
-    public int SelectionStartIndex;
-    public int SelectionEndIndex;
+    private SelectionCarat SelectionStartIndex;
+    private SelectionCarat SelectionEndIndex;
 
     private StringBuilder testTextBuilder = new StringBuilder();
     private RectTransform canvasRect;
-    
+
+    private ISpeechSource speechSource;
+
     private void Start()
     {
         canvasRect = MainScript.Instance.Canvas.GetComponent<RectTransform>();
+        speechSource = new FakeSpeechGenerator(); // Replace with SpeechRecognitionManager later
     }
 
     private void Update()
     {
-        UpdateSelection();
-        MainScript.Instance.OutputTextObj.text = GetTestText();
+        Vector2 visibleCharactersCount = MainScript.Instance.VisibleCharactersCount;
+        UpdateSelection(visibleCharactersCount);
+        MainScript.Instance.OutputTextObj.text = GetLogText(speechSource.Blocks, visibleCharactersCount);
     }
 
-    public float DebugX;
-    public float DebugY;
-
-    private void UpdateSelection()
+    private void UpdateSelection(Vector2 visibleCharactersCount)
     {
-        Vector2 visibleCharactersCount = GetVisibleCharactersCount();
         Plane plane = new Plane(canvasRect.forward, canvasRect.position);
-        SelectionStartIndex = GetCharacterIndex(SelectionStart.position, plane, visibleCharactersCount);
-        SelectionEndIndex = GetCharacterIndex(SelectionEnd.position, plane, visibleCharactersCount);
+        SelectionStartIndex = GetCarat(SelectionStart.position, plane, visibleCharactersCount);
+        SelectionEndIndex = GetCarat(SelectionEnd.position, plane, visibleCharactersCount);
     }
 
-    private int GetCharacterIndex(Vector3 caratPos, Plane canvasPlane, Vector2 visibleCharactersCount)
+    private SelectionCarat GetCarat(Vector3 caratPos, Plane canvasPlane, Vector2 visibleCharactersCount)
     {
         Vector3 projectedStart = canvasPlane.ClosestPointOnPlane(caratPos);
         Vector3 transformedStart = canvasRect.InverseTransformPoint(projectedStart);
 
         float xParam = Mathf.Clamp01(transformedStart.x / canvasRect.rect.width + .5f);
-        int xIndex = (int)(visibleCharactersCount.x * xParam);
+        float xIndex = (visibleCharactersCount.x * xParam);
 
         float yParam = Mathf.Clamp01(transformedStart.y / canvasRect.rect.height + .5f);
         yParam = 1 - yParam;
-        int yIndex = (int)(visibleCharactersCount.y * yParam);
-
-        DebugX = xParam;
-        DebugY = yParam;
-
-        yIndex *= Mathf.FloorToInt(visibleCharactersCount.x);
-        return yIndex + Mathf.FloorToInt(xIndex);
+        float yIndex = (visibleCharactersCount.y * yParam);
+        return new SelectionCarat(yParam, xParam);
     }
 
-    public Vector2 GetVisibleCharactersCount()
-    {
-        float vertical = canvasRect.rect.width * MainScript.Instance.OutputTextObj.fontSize * 40000;
-        float horzontal = canvasRect.rect.width * MainScript.Instance.OutputTextObj.fontSize * (13f / 7) * 10000;
-        return new Vector2(vertical, horzontal);
-    }
-
-    private string GetTestText()
+    private string GetLogText(IEnumerable<SpeechBlock> speechBlocks, Vector2 visibleCharactersCount)
     {
         testTextBuilder.Clear();
-        int characterIndex = 0;
-        for (int y = 0; y < 13; y++)
+        int lineIndex = 0;
+        int relativeStartLine = (int)(SelectionStartIndex.VerticalLineIndex * visibleCharactersCount.y);
+        int relativeEndLine = (int)(SelectionEndIndex.VerticalLineIndex * visibleCharactersCount.y);
+        int totalLines = speechBlocks.Sum(item => item.Lines.Count);
+        int startLine = totalLines - (int)visibleCharactersCount.y + relativeStartLine;
+        int endLine = totalLines - (int)visibleCharactersCount.y + relativeEndLine;
+        foreach (SpeechBlock block in speechBlocks)
         {
-            for (int x = 0; x < 28; x++)
+            foreach (string line in block.Lines)
             {
-                if(characterIndex == SelectionStartIndex)
+                string toAppend = line;
+                if (lineIndex == startLine)
                 {
-                    testTextBuilder.Append("<color=#00FFFF>");
+                    int characterIndex = (int)(SelectionStartIndex.HorizontalCharacterIndex * visibleCharactersCount.x);
+                    toAppend = GetModifiedLine(toAppend, "<color=#00FFFF>", characterIndex);
                 }
-                if(characterIndex == SelectionEndIndex)
+                if (lineIndex == endLine)
                 {
-                    testTextBuilder.Append("</color>");
+                    int characterIndex = (int)(SelectionEndIndex.HorizontalCharacterIndex * visibleCharactersCount.x);
+                    toAppend = GetModifiedLine(toAppend, "</color>", characterIndex);
                 }
-                testTextBuilder.Append(x % 9);
-                characterIndex++;
+                testTextBuilder.AppendLine(toAppend);
+                lineIndex++;
             }
-            testTextBuilder.Append("\n");
         }
         return testTextBuilder.ToString();
+    }
+
+    private string GetModifiedLine(string toModify, string toInsert, int horizontalCharacterIndex)
+    {
+        int clippedIndex = Mathf.Min(horizontalCharacterIndex, toModify.Length);
+        string pre = toModify.Substring(0, clippedIndex);
+        string post = toModify.Substring(clippedIndex, toModify.Length - clippedIndex);
+        return pre + toInsert + post;
+    }
+
+    private struct SelectionCarat
+    {
+        public float VerticalLineIndex { get; }
+        public float HorizontalCharacterIndex{ get; }
+
+        public SelectionCarat(float verticalLineIndex, float horizontalCharacterIndex)
+        {
+            VerticalLineIndex = verticalLineIndex;
+            HorizontalCharacterIndex = horizontalCharacterIndex;
+        }
     }
 }

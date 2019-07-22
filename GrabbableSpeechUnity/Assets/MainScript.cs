@@ -13,10 +13,26 @@ public class MainScript : MonoBehaviour
     public TextMeshProUGUI OutputTextObj;
 
     public static MainScript Instance;
+    private RectTransform canvasRect;
+    
+    public Vector2 VisibleCharactersCount;
 
     private void Awake()
     {
         Instance = this;
+    }
+
+    private void Start()
+    {
+        canvasRect = Canvas.GetComponent<RectTransform>();
+        VisibleCharactersCount = GetVisibleCharactersCount();
+    }
+
+    public Vector2 GetVisibleCharactersCount()
+    {
+        float vertical = canvasRect.rect.width * OutputTextObj.fontSize * 40000;
+        float horzontal = canvasRect.rect.width * OutputTextObj.fontSize * (13f / 7) * 10000;
+        return new Vector2(vertical, horzontal);
     }
 
     void Update()
@@ -24,13 +40,13 @@ public class MainScript : MonoBehaviour
         //OutputTextObj.text = GetFormattedLogText();
     }
 
-    private string GetFormattedLogText()
-    {
-        string colorString = GetHexString(MainScript.Instance.InProgressTextColor);
-        string speechInProgess = SpeechRecognitionManager.Instance.SpeechInProgress;
-        string inProgressPart = "<color=" + colorString + ">" + speechInProgess + "</color>";
-        return SpeechRecognitionManager.Instance.Log + inProgressPart;
-    }
+    //private string GetFormattedLogText()
+    //{
+    //    string colorString = GetHexString(MainScript.Instance.InProgressTextColor);
+    //    string speechInProgess = SpeechRecognitionManager.Instance.SpeechInProgress;
+    //    string inProgressPart = "<color=" + colorString + ">" + speechInProgess + "</color>";
+    //    return SpeechRecognitionManager.Instance.Log + inProgressPart;
+    //}
 
     private static string GetHexString(Color color)
     {

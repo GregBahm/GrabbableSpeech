@@ -340,10 +340,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   SelectionStart: {fileID: 1823425417}
   SelectionEnd: {fileID: 2081583162}
-  SelectionStartIndex: 0
-  SelectionEndIndex: 0
-  DebugX: 0
-  DebugY: 0
 --- !u!114 &986623051
 MonoBehaviour:
   m_ObjectHideFlags: 0
