@@ -13,9 +13,13 @@ public class MainScript : MonoBehaviour
     public TextMeshProUGUI LogTextObj;
     public TextMeshProUGUI InProgressTextObj;
 
+    [Range(0.1f, -0.1f)]
+    public float Scrolling;
+
     public static MainScript Instance;
     private RectTransform canvasRect;
-    
+    private RectTransform speechLogRect;
+
     public Vector2 VisibleCharactersCount;
 
     private void Awake()
@@ -26,10 +30,11 @@ public class MainScript : MonoBehaviour
     private void Start()
     {
         canvasRect = Canvas.GetComponent<RectTransform>();
+        speechLogRect = LogTextObj.GetComponent<RectTransform>();
         VisibleCharactersCount = GetVisibleCharactersCount();
 
-        SpeechSource = SpeechRecognitionManager.Instance;
-        //SpeechSource = new FakeSpeechGenerator();
+        //SpeechSource = SpeechRecognitionManager.Instance;
+        SpeechSource = new FakeSpeechGenerator();
     }
 
     public Vector2 GetVisibleCharactersCount()
@@ -43,6 +48,7 @@ public class MainScript : MonoBehaviour
     {
         LogTextObj.text = TextSelection.Instance.GetLogText();
         InProgressTextObj.text = SpeechSource.SpeechInProgress;
+        speechLogRect.offsetMin = new Vector2(0, Scrolling);
     }
 
     private static string GetHexString(Color color)

@@ -18,6 +18,7 @@ public class TextSelection : MonoBehaviour
 
     private StringBuilder testTextBuilder = new StringBuilder();
     private RectTransform canvasRect;
+    private RectTransform logTextRect;
 
     private void Awake()
     {
@@ -27,6 +28,7 @@ public class TextSelection : MonoBehaviour
     private void Start()
     {
         canvasRect = MainScript.Instance.Canvas.GetComponent<RectTransform>();
+        logTextRect = MainScript.Instance.LogTextObj.GetComponent<RectTransform>();
     }
 
     public string GetLogText()
@@ -38,8 +40,35 @@ public class TextSelection : MonoBehaviour
     private void UpdateSelection(Vector2 visibleCharactersCount)
     {
         Plane plane = new Plane(canvasRect.forward, canvasRect.position);
-        SelectionStartIndex = GetCarat(SelectionStart.position, plane, visibleCharactersCount);
-        SelectionEndIndex = GetCarat(SelectionEnd.position, plane, visibleCharactersCount);
+
+        SelectionCarat caratA = GetCarat(SelectionStart.position, plane, visibleCharactersCount);
+        SelectionCarat caratB = GetCarat(SelectionEnd.position, plane, visibleCharactersCount);
+        
+        int caratALine = (int)(caratA.VerticalLineIndex * visibleCharactersCount.y);
+        int caratBLine = (int)(caratB.VerticalLineIndex * visibleCharactersCount.y);
+        if(caratALine == caratBLine)
+        {
+            if(caratA.HorizontalCharacterIndex < caratB.HorizontalCharacterIndex)
+            {
+                SelectionStartIndex = caratA;
+                SelectionEndIndex = caratB;
+            }
+            else
+            {
+                SelectionStartIndex = caratB;
+                SelectionEndIndex = caratA;
+            }
+        }
+        else if(caratALine > caratBLine)
+        {
+            SelectionStartIndex = caratA;
+            SelectionEndIndex = caratB;
+        }
+        else
+        {
+            SelectionStartIndex = caratB;
+            SelectionEndIndex = caratA;
+        }
     }
 
     private SelectionCarat GetCarat(Vector3 caratPos, Plane canvasPlane, Vector2 visibleCharactersCount)
@@ -48,40 +77,47 @@ public class TextSelection : MonoBehaviour
         Vector3 transformedStart = canvasRect.InverseTransformPoint(projectedStart);
 
         float xParam = Mathf.Clamp01(transformedStart.x / canvasRect.rect.width + .5f);
-        float xIndex = (visibleCharactersCount.x * xParam);
-
         float yParam = Mathf.Clamp01(transformedStart.y / canvasRect.rect.height + .5f);
-        yParam = 1 - yParam;
-        float yIndex = (visibleCharactersCount.y * yParam);
+        yParam -= logTextRect.offsetMin.y / canvasRect.rect.width;
         return new SelectionCarat(yParam, xParam);
     }
+   
 
     private string GetLogText(IEnumerable<SpeechBlock> speechBlocks, Vector2 visibleCharactersCount)
     {
-        testTextBuilder.Clear();
-        int lineIndex = 0;
-        int relativeStartLine = (int)(SelectionStartIndex.VerticalLineIndex * visibleCharactersCount.y);
-        int relativeEndLine = (int)(SelectionEndIndex.VerticalLineIndex * visibleCharactersCount.y);
         int totalLines = speechBlocks.Sum(item => item.Lines.Count);
-        int startLine = totalLines - (int)visibleCharactersCount.y + relativeStartLine;
-        int endLine = totalLines - (int)visibleCharactersCount.y + relativeEndLine;
+        int totalVisibleLines = (int)visibleCharactersCount.y;
+        int startLine = (int)(SelectionStartIndex.VerticalLineIndex * visibleCharactersCount.y);
+        startLine = Mathf.Min(totalLines - 1, startLine);
+
+        int endLine = (int)(SelectionEndIndex.VerticalLineIndex * visibleCharactersCount.y);
+        endLine = Mathf.Min(totalLines - 1, endLine);
+
+        return GetLogText(speechBlocks, totalLines, startLine, endLine, visibleCharactersCount.x);
+    }
+
+    private string GetLogText(IEnumerable<SpeechBlock> speechBlocks, int totalLines, int startLine, int endLine, float charactersPerLine)
+    {
+        int lineIndex = totalLines;
+        testTextBuilder.Clear();
         foreach (SpeechBlock block in speechBlocks)
         {
             foreach (string line in block.Lines)
             {
+                lineIndex--;
                 string toAppend = line;
-                if (lineIndex == startLine)
-                {
-                    int characterIndex = (int)(SelectionStartIndex.HorizontalCharacterIndex * visibleCharactersCount.x);
-                    toAppend = GetModifiedLine(toAppend, "<color=#00FFFF>", characterIndex);
-                }
                 if (lineIndex == endLine)
                 {
-                    int characterIndex = (int)(SelectionEndIndex.HorizontalCharacterIndex * visibleCharactersCount.x);
+                    int characterIndex = (int)(SelectionEndIndex.HorizontalCharacterIndex * charactersPerLine);
                     toAppend = GetModifiedLine(toAppend, "</color>", characterIndex);
                 }
+                if (lineIndex == startLine)
+                {
+                    int characterIndex = (int)(SelectionStartIndex.HorizontalCharacterIndex * charactersPerLine);
+                    characterIndex = Mathf.Min(line.Length, characterIndex);
+                    toAppend = GetModifiedLine(toAppend, "<color=#00FFFF>", characterIndex);
+                }
                 testTextBuilder.AppendLine(toAppend);
-                lineIndex++;
             }
         }
         return testTextBuilder.ToString();
