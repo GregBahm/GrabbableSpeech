@@ -10,9 +10,6 @@ public class TextSelection : MonoBehaviour
 {
     public static TextSelection Instance;
 
-    public Transform SelectionStart;
-    public Transform SelectionEnd;
-
     private SelectionCarat SelectionStartIndex;
     private SelectionCarat SelectionEndIndex;
 
@@ -31,6 +28,11 @@ public class TextSelection : MonoBehaviour
         logTextRect = MainScript.Instance.LogTextObj.GetComponent<RectTransform>();
     }
 
+    private void Update()
+    {
+        MainScript.Instance.LogTextObj.text = GetLogText();
+    }
+
     public string GetLogText()
     {
         UpdateSelection(MainScript.Instance.VisibleCharactersCount);
@@ -41,8 +43,8 @@ public class TextSelection : MonoBehaviour
     {
         Plane plane = new Plane(canvasRect.forward, canvasRect.position);
 
-        SelectionCarat caratA = GetCarat(SelectionStart.position, plane, visibleCharactersCount);
-        SelectionCarat caratB = GetCarat(SelectionEnd.position, plane, visibleCharactersCount);
+        SelectionCarat caratA = GetCarat(MainScript.Instance.SelectionStart.position, plane, visibleCharactersCount);
+        SelectionCarat caratB = GetCarat(MainScript.Instance.SelectionEnd.position, plane, visibleCharactersCount);
         
         int caratALine = (int)(caratA.VerticalLineIndex * visibleCharactersCount.y);
         int caratBLine = (int)(caratB.VerticalLineIndex * visibleCharactersCount.y);

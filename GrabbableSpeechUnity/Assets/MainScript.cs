@@ -8,19 +8,21 @@ using System;
 
 public class MainScript : MonoBehaviour
 {
+    public Transform SelectionStart;
+    public Transform SelectionEnd;
+
     public ISpeechSource SpeechSource { get; private set; }
     public Canvas Canvas;
     public TextMeshProUGUI LogTextObj;
     public TextMeshProUGUI InProgressTextObj;
-
-    [Range(0.1f, -0.1f)]
-    public float Scrolling;
+    
+    public float Scrolling { get; set; }
 
     public static MainScript Instance;
     private RectTransform canvasRect;
     private RectTransform speechLogRect;
 
-    public Vector2 VisibleCharactersCount;
+    public Vector2 VisibleCharactersCount { get; set; }
 
     private void Awake()
     {
@@ -30,11 +32,10 @@ public class MainScript : MonoBehaviour
     private void Start()
     {
         canvasRect = Canvas.GetComponent<RectTransform>();
-        speechLogRect = LogTextObj.GetComponent<RectTransform>();
+        speechLogRect = LogTextObj.GetComponent<RectTransform>(); 
         VisibleCharactersCount = GetVisibleCharactersCount();
 
-        //SpeechSource = SpeechRecognitionManager.Instance;
-        SpeechSource = new FakeSpeechGenerator();
+        SpeechSource = SpeechRecognitionManager.Instance.isActiveAndEnabled ? (ISpeechSource)SpeechRecognitionManager.Instance : new FakeSpeechGenerator();
     }
 
     public Vector2 GetVisibleCharactersCount()
@@ -46,7 +47,6 @@ public class MainScript : MonoBehaviour
 
     void Update()
     {
-        LogTextObj.text = TextSelection.Instance.GetLogText();
         InProgressTextObj.text = SpeechSource.SpeechInProgress;
         speechLogRect.offsetMin = new Vector2(0, Scrolling);
     }
