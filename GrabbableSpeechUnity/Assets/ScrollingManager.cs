@@ -7,6 +7,8 @@ public class ScrollingManager : MonoBehaviour
     public static ScrollingManager Instance;
     public Transform Scrollbar;
 
+    public BoxCollider SwipeZone;
+
     public float Scrollage { get; set; }
     public bool AllowLogChanges { get; set; }
     
@@ -41,6 +43,7 @@ public class ScrollingManager : MonoBehaviour
 
         Scrollage = Mathf.Lerp(Scrollage, scrollTarget, Time.deltaTime * 5);
         UpdateScrollbar(pagesCount, scrollMax);
+        UpdateSwipeMode(); 
     }
 
     private void UpdateScrollbar(float pagesCount, float scrollMax)
@@ -83,7 +86,40 @@ public class ScrollingManager : MonoBehaviour
         scrollTarget = Mathf.Clamp(scrollTarget, -scrollMax, 0);
     }
 
-    private void HandleScrolling()
+
+    private bool GetIsSwipeEntered()
     {
+        Vector3 indexPosition = JointTrackingManager.Instance.IndexProxy.position;
+        return SwipeZone.bounds.Contains(indexPosition);
+    }
+
+    private bool wasSwipeModeEntered;
+    float swipeFingerStartPos;
+    float swipeScrollStartPos;
+    private float GetFingerRelativeToFingerzone()
+    {
+        Vector3 indexPosition = JointTrackingManager.Instance.IndexProxy.position;
+        Vector3 relativePos = SwipeZone.transform.worldToLocalMatrix * indexPosition;
+        return relativePos.y;
+    }
+
+    public float SwipeModeSensitivity;
+
+    private void UpdateSwipeMode()
+    {
+        bool isEntered = GetIsSwipeEntered();
+        if ((isEntered || wasSwipeModeEntered))
+        {
+            float relativeFinger = GetFingerRelativeToFingerzone();
+            if (!wasSwipeModeEntered)
+            {
+                swipeFingerStartPos = relativeFinger;
+                swipeScrollStartPos = scrollTarget;
+            }
+            float scrollChange = swipeFingerStartPos - relativeFinger;
+            scrollChange *= SwipeModeSensitivity;
+            scrollTarget = swipeScrollStartPos + scrollChange;
+        }
+        wasSwipeModeEntered = isEntered;
     }
 }
