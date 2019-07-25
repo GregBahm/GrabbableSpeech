@@ -15,14 +15,14 @@ public class MainScript : MonoBehaviour
     public Canvas Canvas;
     public TextMeshProUGUI LogTextObj;
     public TextMeshProUGUI InProgressTextObj;
-    
-    public float Scrolling { get; set; }
 
     public static MainScript Instance;
     private RectTransform canvasRect;
     private RectTransform speechLogRect;
+    private StringBuilder testTextBuilder = new StringBuilder();
+    public bool DoTextHighlighting;
 
-    public Vector2 VisibleCharactersCount { get; set; }
+    public Vector2 VisibleCharactersCount { get; private set; }
 
     private void Awake()
     {
@@ -35,20 +35,46 @@ public class MainScript : MonoBehaviour
         speechLogRect = LogTextObj.GetComponent<RectTransform>(); 
         VisibleCharactersCount = GetVisibleCharactersCount();
 
-        SpeechSource = SpeechRecognitionManager.Instance.isActiveAndEnabled ? (ISpeechSource)SpeechRecognitionManager.Instance : new FakeSpeechGenerator();
+        SpeechSource = SpeechRecognitionManager.Instance.isActiveAndEnabled ? (ISpeechSource)SpeechRecognitionManager.Instance : FakeSpeechGenerator.Instance;
     }
 
     public Vector2 GetVisibleCharactersCount()
     {
-        float vertical = canvasRect.rect.width * LogTextObj.fontSize * 40000;
-        float horzontal = canvasRect.rect.width * LogTextObj.fontSize * (13f / 7) * 10000;
+        float vertical = canvasRect.rect.width * LogTextObj.fontSize * 10000;
+        float horzontal = canvasRect.rect.width * LogTextObj.fontSize * (13f / 7) * 2500;
         return new Vector2(vertical, horzontal);
     }
 
     void Update()
     {
+        if (ScrollingManager.Instance.AllowLogChanges)
+        {
+            LogTextObj.text = UpdateLogText();
+        }
         InProgressTextObj.text = SpeechSource.SpeechInProgress;
-        speechLogRect.offsetMin = new Vector2(0, Scrolling);
+        speechLogRect.offsetMin = new Vector2(0, ScrollingManager.Instance.Scrollage);
+    }
+
+    private string UpdateLogText()
+    {
+        if(DoTextHighlighting)
+        {
+            return TextSelection.Instance.GetLogText();
+        }
+        return GetLogTextBasic();
+    }
+
+    private string GetLogTextBasic()
+    {
+        testTextBuilder.Clear();
+        foreach (SpeechBlock block in MainScript.Instance.SpeechSource.Blocks)
+        {
+            foreach (string line in block.Lines)
+            {
+                testTextBuilder.AppendLine(line);
+            }
+        }
+        return testTextBuilder.ToString();
     }
 
     private static string GetHexString(Color color)

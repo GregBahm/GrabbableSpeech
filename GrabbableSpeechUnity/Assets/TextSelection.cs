@@ -16,7 +16,7 @@ public class TextSelection : MonoBehaviour
     private StringBuilder testTextBuilder = new StringBuilder();
     private RectTransform canvasRect;
     private RectTransform logTextRect;
-
+    
     private void Awake()
     {
         Instance = this;
@@ -26,11 +26,6 @@ public class TextSelection : MonoBehaviour
     {
         canvasRect = MainScript.Instance.Canvas.GetComponent<RectTransform>();
         logTextRect = MainScript.Instance.LogTextObj.GetComponent<RectTransform>();
-    }
-
-    private void Update()
-    {
-        MainScript.Instance.LogTextObj.text = GetLogText();
     }
 
     public string GetLogText()

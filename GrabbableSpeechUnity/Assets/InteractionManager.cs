@@ -6,11 +6,6 @@ public class InteractionManager : MonoBehaviour
 
     private PinchDetector leftPinchDetector;
     private PinchDetector rightPinchDetector;
-
-    private float scrollPanelStartPos;
-    private float scrollPinchStartPos;
-    private bool wasScrollPinching;
-    private float scrollTarget;
     private bool wasSelectPinching;
     
     private void Start()
@@ -26,29 +21,7 @@ public class InteractionManager : MonoBehaviour
         rightPinchDetector.Update();
 
         HandleSelecting();
-        HandleScrolling(); 
-        MainScript.Instance.Scrolling = Mathf.Lerp(MainScript.Instance.Scrolling, scrollTarget, Time.deltaTime * 5);
     } 
-
-    private void HandleScrolling()
-    {
-        if (leftPinchDetector.Pinching)
-        {
-            if (!wasScrollPinching)
-            {
-                scrollPanelStartPos = scrollTarget;
-                scrollPinchStartPos = leftPinchDetector.PinchPos.y;
-            }
-            float scrollChange = scrollPinchStartPos - leftPinchDetector.PinchPos.y;
-            scrollChange *= ScrollSensitivity;
-            scrollTarget = scrollPanelStartPos - scrollChange;
-        }
-        else
-        {
-            scrollTarget = Mathf.Max(0, scrollTarget);
-        }
-        wasScrollPinching = leftPinchDetector.Pinching;
-    }
 
     private void HandleSelecting()
     { 
