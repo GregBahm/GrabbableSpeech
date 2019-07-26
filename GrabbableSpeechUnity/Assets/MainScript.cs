@@ -15,12 +15,12 @@ public class MainScript : MonoBehaviour
     public Canvas Canvas;
     public TextMeshProUGUI LogTextObj;
     public TextMeshProUGUI InProgressTextObj;
+    public bool AllowLogChanges { get; set; }
 
     public static MainScript Instance;
     private RectTransform canvasRect;
     private RectTransform speechLogRect;
     private StringBuilder testTextBuilder = new StringBuilder();
-    public bool DoTextHighlighting;
 
     public Vector2 VisibleCharactersCount { get; private set; }
 
@@ -47,21 +47,9 @@ public class MainScript : MonoBehaviour
 
     void Update()
     {
-        if (ScrollingManager.Instance.AllowLogChanges)
-        {
-            LogTextObj.text = UpdateLogText();
-        }
+        LogTextObj.text = LineSelector.Instance.GetLogText();
         InProgressTextObj.text = SpeechSource.SpeechInProgress;
         speechLogRect.offsetMin = new Vector2(0, ScrollingManager.Instance.Scrollage);
-    }
-
-    private string UpdateLogText()
-    {
-        if(DoTextHighlighting)
-        {
-            return TextSelection.Instance.GetLogText();
-        }
-        return GetLogTextBasic();
     }
 
     private string GetLogTextBasic()

@@ -10,7 +10,6 @@ public class ScrollingManager : MonoBehaviour
     public BoxCollider SwipeZone;
 
     public float Scrollage { get; set; }
-    public bool AllowLogChanges { get; set; }
     
     private float scrollPanelStartPos;
     private float scrollPinchStartPos;
@@ -22,7 +21,7 @@ public class ScrollingManager : MonoBehaviour
 
     void Awake()
     {
-        Instance = this;
+        Instance = this; 
     }
 
     private void Start()
@@ -38,7 +37,7 @@ public class ScrollingManager : MonoBehaviour
         scrollbarIsVisible = scrollMax > 0;
         scrollMax = Mathf.Max(0, scrollMax);
 
-        AllowLogChanges = Mathf.Abs(scrollTarget) < float.Epsilon;
+        MainScript.Instance.AllowLogChanges = Mathf.Abs(scrollTarget) < float.Epsilon;
         HandleScrollClamping(scrollMax);
 
         Scrollage = Mathf.Lerp(Scrollage, scrollTarget, Time.deltaTime * 5);

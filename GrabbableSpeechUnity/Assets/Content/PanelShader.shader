@@ -118,7 +118,8 @@
 				float4 shadedColor = _ShineColor * shine;
 
 				float fader = lerp(1, i.uv.y, _FadeDown);
-				return -(shadedColor + lambertLight) * fader;
+				float contribution = (1 - (shadedColor + lambertLight)) * fader;
+				return contribution * .5;
             }
             ENDCG
         }
